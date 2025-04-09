@@ -13,13 +13,16 @@ import timeit
 
 T = TypeVar('T')
 
-class SupportsMap(Protocol):
+class _SupportsMap(Protocol):
     """Typing protocol for objects with a map method."""
     def map(self, func, iterable):
+        """wrapper around the inner value's .map() function"""
         ...
 
-class SupportsGet(Protocol):
+class _SupportsGet(Protocol):
+    """Helper class to wrap the future in an internal interface"""
     def get(self) -> T:
+        """wrapper around the inner value's .get() function"""
         ...
 
 class TestResult(Generic[T]):
@@ -53,14 +56,17 @@ class TestResult(Generic[T]):
     def __ge__(self, oth):
         return self.inner >= oth.inner
 
-class TestResults(Generic[T]):    
+class TestResults(Generic[T]):
+    """Holds the output value of the test, as well as the wall-clock time"""
     def __init__(self, fns: List[Callable[..., T]]):
         self.inner = fns
 
     def sorted_by_time(self) -> Self:
+        """Returns a new list of sorted test results by time"""
         return TestResults(sorted(self.inner, key=lambda x: x.time))
-    
+
     def sort(self):
+        """In place sort of the test results by function name"""
         self.inner.sort()
 
     def __len__(self):
@@ -71,7 +77,8 @@ class TestResults(Generic[T]):
 
 
 class PendingResult(Generic[T]):
-    def __init__(self, name: str, fut: SupportsGet):
+    """Holds a Pool future that is waiting to be polled with .wait()"""
+    def __init__(self, name: str, fut: _SupportsGet):
         self.name = name
         self.fut = fut
 
@@ -97,12 +104,14 @@ class PendingResult(Generic[T]):
         return self.name >= oth.name
 
     def wait(self) -> TestResult[T]:
+        """Joins the future back into the branch"""
         time, res = self.fut.get()
         return TestResult[T](self.name, time, res)
 
 class PendingResults(Generic[T]):
     """
-        Pending Results is useful when you have a function does not take arguments, but is also not statically evaluated.
+        Pending Results is useful when you have a function does not take arguments,
+        but is also not statically evaluated.
 
         Compilers are smart, and therefore statically evaluated functions such as
         ```
@@ -111,12 +120,16 @@ class PendingResults(Generic[T]):
         ```
         will be optimized into a static value and therefore be extremely fast.
 
-        Such functions are not the use case of PendingResult. Instead it is more usefull for something that has a side effect
+        Such functions are not the use case of PendingResult. 
+        Instead it is more usefull for something that has a side effect
         like a mutation or something that uses randomly generated values.
 
-        Alternatively, you can construct this class with an empty list and append the callbacks once the values are known.
-        This will not have any significant value, but will save you having to unroll the .wait evaluation with a for loop.
+        Alternatively, you can construct this class with an empty 
+        list and append the callbacks once the values are known.
+        This will not have any significant value, but will save you 
+        having to unroll the .wait() evaluation with a for loop.
 
+        ## Example
         ```
         pend = PendingResults([])
 
@@ -136,13 +149,21 @@ class PendingResults(Generic[T]):
         return len(self.inner)
 
     def wait(self) -> TestResults[T]:
+        """
+        Waits for all the PendingResult(s) to resolve back to the main branch
+        
+        ## Returns
+        A list of test results wrapped in a TestRestults class instance
+        """
         results = [x.wait() for x in self.inner]
         return TestResults(results)
 
     def append(self, value: T):
+        """Functionally the same as a list.append()"""
         self.inner.append(value)
 
     def extend(self, value: T):
+        """Functionally the same as a list.extend()"""
         self.inner.extend(value)
 
     def __iter__(self) -> Iterator[Callable[..., T]]:
@@ -155,10 +176,12 @@ def _time_fn(test_fn: Callable[..., Any], iters, args, kwargs) -> tuple[float, T
     return timeit.timeit(capture_ret, number=iters), result_holder["out"]
 
 
-def bench(p: SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs) -> PendingResult:
+def bench(p: _SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs) -> PendingResult:
     """
-    Provides an easy to use function to 
+    Provides an easy to use function to perform bench testing and evaluate wall-clock time.
+    Interpret results with a grain of salt.
 
+    ## Example
     ```
     def is_true(boolean: bool) {
         return boolean
@@ -168,13 +191,13 @@ def bench(p: SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs)
 
     if __name__ == '__main__':
         p = Pool()
-        test_handles = []
+        test_handles = PendingResults([])
         
         for test in tests:
             handle: bench.PendingResult = bench.bench(p, test, iters=10_000_000)
             test_handles.append(handle)
 
-        test_results = map(lambda test: test.wait(), test_handles)
+        test_results = test_handles.wait()
 
         for test in test_results:
             print(test)
