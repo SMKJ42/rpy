@@ -1,11 +1,23 @@
 """
     ## rpy.bench
 
-    bench is a high level module designed to provide easy access to the pool function
+    bench is a high level module designed to provide easy access to multiprocessing's Pool class
 
     ### Functions
+    bench
 
+    ### Internal functions
+    _time_fn
+    
     ### Classes
+    TestResult
+    TestResults
+    PendingResult
+    PendingResults
+
+    ### Internal Classes
+    _SupportsMap
+    _SupportsGet
 """
 
 from typing import Callable, Protocol, TypeVar, Generic, Any, List, Self, Iterator
