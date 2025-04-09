@@ -11,8 +11,8 @@ def add_py_bound(a: int, b: int) -> int:
 def add_py_py(a: int, b: int) -> int:
     ...
 
-def reduce(list: List[int], f: Any) -> int:
+def reduce(f: Any, nums: List[int]) -> int:
     ...
 
-def reduce_add(list: List[int],) -> int:
+def reduce_add(nums: List[int],) -> int:
     ...

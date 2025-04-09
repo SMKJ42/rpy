@@ -21,12 +21,12 @@ fn add_py_py<'a>(a: Py<PyInt>, b: Py<PyInt>) -> PyResult<Py<PyAny>> {
 }
 
 #[pyfunction]
-#[pyo3(signature = (f, list))]
+#[pyo3(signature = (nums, f))]
 fn reduce<'a>(
+    nums: Bound<'a, PyList>,
     f: Bound<'a, PyFunction>,
-    list: Bound<'a, PyList>,
 ) -> Result<pyo3::Bound<'a, pyo3::PyAny>, PyErr> {
-    let mut list = list.iter();
+    let mut list = nums.iter();
 
     let mut acc = match list.next() {
         Some(acc) => acc,
@@ -45,8 +45,8 @@ fn reduce<'a>(
 }
 
 #[pyfunction]
-fn reduce_add(list: Vec<f64>) -> f64 {
-    list.into_iter()
+fn reduce_add(nums: Vec<f64>) -> f64 {
+    nums.into_iter()
         .reduce(|acc, curr| acc + curr)
         .unwrap_or(0.)
 }
