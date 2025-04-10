@@ -24,7 +24,6 @@ from typing import Callable, Protocol, TypeVar, Generic, Any, List, Self, Iterat
 import timeit
 
 T = TypeVar('T')
-
 class _SupportsMap(Protocol):
     """Typing protocol for objects with a map method."""
     def map(self, func, iterable):
@@ -182,7 +181,7 @@ class PendingResults(Generic[T]):
         return self.inner.__iter__()
 
 def _time_fn(test_fn: Callable[..., Any], iters, args, kwargs) -> tuple[float, T]:
-    result_holder = {"out": 0}
+    result_holder = {"out": None}
     def capture_ret():
         result_holder["out"] = test_fn(*args, **kwargs)
     return timeit.timeit(capture_ret, number=iters), result_holder["out"]
@@ -217,3 +216,5 @@ def bench(p: _SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs
     """
     result = p.apply_async(_time_fn, (func, iters, args, kwargs))
     return PendingResult(func.__name__, result)
+
+import unittest

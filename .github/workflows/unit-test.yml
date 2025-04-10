@@ -1,0 +1,23 @@
+name: unit-test
+
+on:
+    push:
+        branches:
+            - "*"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: 3.x
+            - name: Set up env
+              run: python3 -m venv .env && source venv/bin/activate
+            - name: Install deps
+              run: pip install -r requirements.txt
+            - name: Run python unit tests
+              # test the normal unit test suite
+              run: cd python
+                  python3 -m unittest discover -s . -p "*.py"

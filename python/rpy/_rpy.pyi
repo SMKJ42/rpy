@@ -1,6 +1,8 @@
 # from rpy import add_rust_native, add_py_bound, add_py_py, reduce, reduce_add
 
-from typing import List, Any
+from typing import List, Any, TypeVar
+
+T = TypeVar('T')
 
 def add_rust_native(a: int, b: int) -> int:
     ...

@@ -8,9 +8,8 @@ import rpy
 from rpy import bench
 
 import numpy as np
-from typing import Any
 
-ITERS = 10_000_000
+ITERS = 1_000_000
 
 def add_python(a, b):
     return a + b
@@ -24,8 +23,11 @@ def reduce_add_python(nums: List[int]):
 def reduce_rust(nums: List[int]) -> int:
     return rpy.reduce(f=add, nums=nums)
 
-add_tests = [rpy.add_rust_native, rpy.add_py_bound, rpy.add_py_bound, add_python]
-reduce_tests = [reduce_rust, reduce_add_python, np.add.reduce, rpy.reduce_add]
+def numpy_reduce(nums: List[int]):
+    np.add.reduce(array=nums)
+
+add_tests = [rpy.add_py_bound, add_python]
+reduce_tests = [reduce_rust, reduce_add_python, numpy_reduce, rpy.reduce_add]
 
 if __name__ == '__main__':
     p = Pool()
