@@ -16,6 +16,7 @@ jobs:
             - name: python-unit-tests
               # test the normal unit test suite
               run: |
+                  pip install maturin
                   maturin develop --release
                   cd python
                   python3 -m venv .env
