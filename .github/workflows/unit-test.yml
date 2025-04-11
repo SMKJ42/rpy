@@ -1,0 +1,25 @@
+name: python-unit-tests
+
+on:
+    push:
+        branches:
+            - "*"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: 3.x
+            - name: python-unit-tests
+              # test the normal unit test suite
+              run: |
+                  pip install maturin
+                  python3 -m venv .env
+                  source .env/bin/activate
+                  maturin develop --release
+                  cd python
+                  pip install -r requirements.txt
+                  python3 -m unittest discover -s . -p "*.py"
