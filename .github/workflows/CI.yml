@@ -19,7 +19,26 @@ permissions:
     contents: read
 
 jobs:
+    py-unittest:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: 3.x
+            - name: python-unit-tests
+              # test the normal unit test suite
+              run: |
+                  pip install maturin
+                  python3 -m venv .env
+                  source .env/bin/activate
+                  maturin develop --release
+                  cd python
+                  pip install -r requirements.txt
+                  python3 -m unittest discover -s . -p "*.py"
+
     linux:
+        needs: py-unittest
         runs-on: ${{ matrix.platform.runner }}
         strategy:
             matrix:
@@ -55,6 +74,7 @@ jobs:
                   path: dist
 
     musllinux:
+        needs: py-unittest
         runs-on: ${{ matrix.platform.runner }}
         strategy:
             matrix:
@@ -86,6 +106,7 @@ jobs:
                   path: dist
 
     windows:
+        needs: py-unittest
         runs-on: ${{ matrix.platform.runner }}
         strategy:
             matrix:
@@ -113,6 +134,7 @@ jobs:
                   path: dist
 
     macos:
+        needs: py-unittest
         runs-on: ${{ matrix.platform.runner }}
         strategy:
             matrix:
@@ -139,6 +161,7 @@ jobs:
                   path: dist
 
     sdist:
+        needs: py-unittest
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -157,7 +180,7 @@ jobs:
         name: Release
         runs-on: ubuntu-latest
         if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
-        needs: [linux, musllinux, windows, macos, sdist]
+        needs: [linux, musllinux, windows, macos, sdist, py-unittest]
         permissions:
             # Use to sign the release artifacts
             id-token: write
