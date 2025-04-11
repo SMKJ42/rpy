@@ -1,4 +1,4 @@
-name: unit-test
+name: python-unit-tests
 
 on:
     push:
@@ -13,12 +13,10 @@ jobs:
             - uses: actions/setup-python@v5
               with:
                   python-version: 3.x
-            - name: Set up env
-              run: python3 -m venv .env && source .env/bin/activate
-            - name: Install deps
-              run: cd python &&
-                  pip install -r requirements.txt
-            - name: Run python unit tests
+            - name: python-unit-tests
               # test the normal unit test suite
               run: cd python &&
+                  python3 -m venv .env
+                  pip install -r requirements.txt
+                  source .env/bin/activate
                   python3 -m unittest discover -s . -p "*.py"
