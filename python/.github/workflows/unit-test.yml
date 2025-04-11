@@ -16,9 +16,9 @@ jobs:
             - name: Set up env
               run: python3 -m venv .env && source .env/bin/activate
             - name: Install deps
-              run: cd python
+              run: cd python &&
                   pip install -r requirements.txt
             - name: Run python unit tests
               # test the normal unit test suite
-              run: cd python
+              run: cd python &&
                   python3 -m unittest discover -s . -p "*.py"
