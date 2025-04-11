@@ -14,7 +14,7 @@ jobs:
               with:
                   python-version: 3.x
             - name: Set up env
-              run: python3 -m venv .env && source venv/bin/activate
+              run: python3 -m venv .env && source .env/bin/activate
             - name: Install deps
               run: pip install -r requirements.txt
             - name: Run python unit tests
