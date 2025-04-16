@@ -4,10 +4,10 @@ from multiprocessing import Pool
 from functools import reduce
 from typing import List
 
-import rpy
-from rpy import bench
-
 import numpy as np
+
+from .. import rpy 
+from ..rpy import bench
 
 ITERS = 1_000_000
 

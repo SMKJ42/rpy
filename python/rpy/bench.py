@@ -20,6 +20,9 @@
     _SupportsGet
 """
 
+import multiprocessing
+
+from multiprocessing import pool
 from typing import Callable, Protocol, TypeVar, Generic, Any, List, Self, Iterator
 import timeit
 
@@ -69,10 +72,10 @@ class TestResult(Generic[T]):
 
 class TestResults(Generic[T]):
     """Holds the output value of the test, as well as the wall-clock time"""
-    def __init__(self, fns: List[Callable[..., T]]):
-        self.inner = fns
+    def __init__(self, vals: List[TestResult[T]]):
+        self.inner = vals
 
-    def sorted_by_time(self) -> Self:
+    def sorted_by_time(self) -> 'TestResults[T]':
         """Returns a new list of sorted test results by time"""
         return TestResults(sorted(self.inner, key=lambda x: x.time))
 
@@ -83,13 +86,13 @@ class TestResults(Generic[T]):
     def __len__(self):
         return len(self.inner)
 
-    def __iter__(self) -> Iterator[Self]:
-        return self.inner.__iter__()
+    def __iter__(self) -> Iterator[TestResult[T]]:
+        return iter(self.inner)
 
 
 class PendingResult(Generic[T]):
     """Holds a Pool future that is waiting to be polled with .wait()"""
-    def __init__(self, name: str, fut: _SupportsGet):
+    def __init__(self, name: str, fut: pool.AsyncResult):
         self.name = name
         self.fut = fut
 
@@ -169,25 +172,25 @@ class PendingResults(Generic[T]):
         results = [x.wait() for x in self.inner]
         return TestResults(results)
 
-    def append(self, value: T):
+    def append(self, value: PendingResult[T]):
         """Functionally the same as a list.append()"""
         self.inner.append(value)
 
-    def extend(self, value: T):
+    def extend(self, value: List[PendingResult[T]]):
         """Functionally the same as a list.extend()"""
         self.inner.extend(value)
 
-    def __iter__(self) -> Iterator[Callable[..., T]]:
-        return self.inner.__iter__()
+    def __iter__(self) -> Iterator[PendingResult[T]]:
+        return iter(self.inner)
 
-def _time_fn(test_fn: Callable[..., Any], iters, args, kwargs) -> tuple[float, T]:
+def _time_fn(test_fn: Callable[..., Any], iters, args, kwargs) -> tuple[float, Any]:
     result_holder = {"out": None}
     def capture_ret():
         result_holder["out"] = test_fn(*args, **kwargs)
     return timeit.timeit(capture_ret, number=iters), result_holder["out"]
 
 
-def bench(p: _SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs) -> PendingResult:
+def bench(p: pool.Pool, func: Callable[..., T], iters: int, *args, **kwargs) -> PendingResult:
     """
     Provides an easy to use function to perform bench testing and evaluate wall-clock time.
     Interpret results with a grain of salt.
@@ -217,4 +220,3 @@ def bench(p: _SupportsMap, func: Callable[..., Any], iters: int, *args, **kwargs
     result = p.apply_async(_time_fn, (func, iters, args, kwargs))
     return PendingResult(func.__name__, result)
 
-import unittest
